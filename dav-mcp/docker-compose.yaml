@@ -1,3 +1,4 @@
+name: dav-mcp
 services:
   dav-mcp:
     build: .

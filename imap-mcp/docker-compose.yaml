@@ -1,3 +1,4 @@
+name: imap-mcp
 services:
   imap-mcp:
     build: .
@@ -33,6 +34,8 @@ services:
     build: .
     image: imap-mcp:0.1.0
     container_name: imap-mcp-indexer
+    healthcheck:
+      disable: true
     restart: unless-stopped
     env_file: .env
     environment:

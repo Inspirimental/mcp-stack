@@ -1,3 +1,4 @@
+name: mcp-auth
 services:
   mcp-auth:
     build: .
