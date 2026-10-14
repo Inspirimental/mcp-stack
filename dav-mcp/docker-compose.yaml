@@ -1,0 +1,26 @@
+services:
+  dav-mcp:
+    build: .
+    image: dav-mcp:0.1.0
+    container_name: dav-mcp
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      DAV_MCP_CONFIG: /config/config.toml
+    volumes:
+      - ./config.toml:/config/config.toml:ro
+    ports:
+      # Localhost only — Caddy terminates TLS and forwards.
+      - "127.0.0.1:8771:8771"
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop:
+      - ALL
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"

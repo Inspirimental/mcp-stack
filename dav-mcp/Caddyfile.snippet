@@ -1,0 +1,36 @@
+# Extend the existing mcp.timbeck.de block with the DAV routes.
+#
+# The order of `handle` blocks matters — Caddy stops at the first match.
+# Both well-known documents must reach the right backend:
+#   /.well-known/oauth-authorization-server/auth  -> mcp-auth
+#   /.well-known/oauth-protected-resource/mcp     -> imap-mcp
+#   /.well-known/oauth-protected-resource/dav     -> dav-mcp
+
+mcp.timbeck.de {
+	encode zstd gzip
+
+	handle /.well-known/oauth-authorization-server/auth {
+		reverse_proxy 127.0.0.1:8780
+	}
+	handle /auth/* {
+		reverse_proxy 127.0.0.1:8780
+	}
+
+	# Calendars and contacts.
+	handle /dav* {
+		reverse_proxy 127.0.0.1:8771
+	}
+	handle /.well-known/oauth-protected-resource/dav {
+		reverse_proxy 127.0.0.1:8771
+	}
+
+	# Everything else stays with the mail server.
+	handle {
+		reverse_proxy 127.0.0.1:8770
+	}
+
+	log {
+		output file /var/log/caddy/mcp.timbeck.de.log
+		format json
+	}
+}

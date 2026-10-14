@@ -1,0 +1,85 @@
+# imap-mcp configuration
+#
+# Copy to ~/.config/imap-mcp/config.toml (or point IMAP_MCP_CONFIG at it).
+#
+# NOTE: there is deliberately no password field. Each account reads its
+# app password from an environment variable, so this file stays safe to
+# commit and secrets can come from Docker/systemd instead.
+
+# Where the header-only index lives. Envelopes only — no message bodies.
+index_path = "/data/headers.db"
+
+# How many messages per folder to index on the first pass (newest first).
+index_max_per_folder = 20000
+
+
+# --------------------------------------------------------------------
+# OAuth — required as soon as this server is reachable from outside
+# --------------------------------------------------------------------
+# imap-mcp is a resource server: it VERIFIES tokens, it never issues
+# them. Your own authorization server signs them; this block tells MCP
+# clients where that server is (RFC 9728) and how to check signatures.
+#
+# Note: Claude requires the authorization server to support Dynamic
+# Client Registration. That requirement lives with the authorization
+# server, not here.
+#
+# [auth]
+# enabled = true
+# base_url = "https://mcp.timbeck.de"
+# authorization_servers = ["https://auth.timbeck.de"]
+# jwks_uri = "https://auth.timbeck.de/.well-known/jwks.json"
+# issuer = "https://auth.timbeck.de"
+# # MUST identify this server. Without it, a token minted for any other
+# # service your authorization server protects would be accepted here.
+# audience = "https://mcp.timbeck.de"
+# required_scopes = ["mail:read"]
+
+
+# --------------------------------------------------------------------
+# addonware GmbH — mailbox.org
+# --------------------------------------------------------------------
+[[account]]
+name = "addonware"
+host = "imap.mailbox.org"
+port = 993
+username = "beck@addonware.de"
+# Create under: mailbox.org → Einstellungen → Sicherheit →
+# Mail-App-Passwörter (required once 2FA is on; allow IMAP for it).
+password_env = "IMAP_MCP_ADDONWARE_PASSWORD"
+writable = false
+exclude_folders = ["Trash", "Junk", "Drafts", "Papierkorb", "Entwürfe"]
+
+
+# --------------------------------------------------------------------
+# iCloud
+# --------------------------------------------------------------------
+[[account]]
+name = "icloud"
+host = "imap.mail.me.com"
+port = 993
+username = "your-apple-id@icloud.com"
+# Apple requires an app-specific password (appleid.apple.com →
+# Sign-In and Security → App-Specific Passwords). The normal Apple ID
+# password will not work.
+password_env = "IMAP_MCP_ICLOUD_PASSWORD"
+writable = false
+exclude_folders = ["Trash", "Junk", "Drafts", "Deleted Messages"]
+# iCloud is noticeably slower than mailbox.org, and returns malformed
+# FETCH responses often enough that smaller batches waste less work when
+# the fetch has to bisect around a bad message.
+timeout = 45
+fetch_batch_size = 200
+
+
+# --------------------------------------------------------------------
+# Stroemland — fill in the provider's IMAP host
+# --------------------------------------------------------------------
+[[account]]
+name = "stroemland"
+host = "CHANGE-ME.example.com"
+port = 993
+username = "CHANGE-ME"
+password_env = "IMAP_MCP_STROEMLAND_PASSWORD"
+writable = false
+exclude_folders = ["Trash", "Junk", "Drafts", "Papierkorb"]

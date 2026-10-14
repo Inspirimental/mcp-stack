@@ -1,0 +1,52 @@
+services:
+  imap-mcp:
+    build: .
+    image: imap-mcp:0.1.0
+    container_name: imap-mcp
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      IMAP_MCP_CONFIG: /config/config.toml
+    volumes:
+      # Read-only mount: the server never rewrites its own config.
+      - ./config.toml:/config/config.toml:ro
+      - imap-mcp-data:/data
+    ports:
+      # Bound to localhost only. Terminate TLS and handle auth in your
+      # reverse proxy — do not expose 8770 to the internet directly.
+      - "127.0.0.1:8770:8770"
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop:
+      - ALL
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # Keeps the header index current. Runs the incremental sync hourly.
+  imap-mcp-indexer:
+    build: .
+    image: imap-mcp:0.1.0
+    container_name: imap-mcp-indexer
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      IMAP_MCP_CONFIG: /config/config.toml
+    volumes:
+      - ./config.toml:/config/config.toml:ro
+      - imap-mcp-data:/data
+    entrypoint: ["/bin/sh", "-c"]
+    command: >
+      'while true; do imap-mcp index || echo "index run failed"; sleep 3600; done'
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+
+volumes:
+  imap-mcp-data:

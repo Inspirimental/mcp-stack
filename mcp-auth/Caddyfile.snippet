@@ -1,0 +1,32 @@
+# Add to your existing Caddyfile.
+#
+# Two services share one hostname, so the order of these blocks matters.
+# Caddy evaluates `handle` blocks in order and stops at the first match.
+
+mcp.timbeck.de {
+	encode zstd gzip
+
+	# RFC 8414 puts the issuer's path component AFTER the well-known
+	# segment, so this URL does NOT start with /auth and would otherwise
+	# fall through to the MCP server. Clients fetch it to discover the
+	# authorization server; if it 404s, the whole login flow never starts.
+	handle /.well-known/oauth-authorization-server/auth {
+		reverse_proxy 127.0.0.1:8780
+	}
+
+	# Authorization server: login page, consent, token, registration, JWKS.
+	handle /auth/* {
+		reverse_proxy 127.0.0.1:8780
+	}
+
+	# Everything else is the MCP server itself: /mcp and its
+	# /.well-known/oauth-protected-resource/mcp document.
+	handle {
+		reverse_proxy 127.0.0.1:8770
+	}
+
+	log {
+		output file /var/log/caddy/mcp.timbeck.de.log
+		format json
+	}
+}

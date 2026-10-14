@@ -1,0 +1,24 @@
+services:
+  mcp-auth:
+    build: .
+    image: mcp-auth:0.1.0
+    container_name: mcp-auth
+    restart: unless-stopped
+    env_file: .env
+    volumes:
+      - mcp-auth-data:/data
+    ports:
+      # Localhost only — Caddy terminates TLS and forwards.
+      - "127.0.0.1:8780:8780"
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  mcp-auth-data:

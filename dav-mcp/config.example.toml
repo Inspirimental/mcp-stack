@@ -1,0 +1,61 @@
+# dav-mcp configuration
+#
+# Copy to config.toml. As with imap-mcp there is deliberately no
+# password field — each account names an environment variable.
+#
+# NOTE ON PASSWORDS: a provider's mail password may not cover calendars.
+#   iCloud       one app-specific password covers mail, calendar, contacts
+#   mailbox.org  the Mail-App-Passwort is IMAP/SMTP only. Calendars and
+#                contacts need an Applikationspasswort of type
+#                "Kalender- und Adressbuch-Client (CalDAV/CardDAV)",
+#                created under Einstellungen -> Sicherheit ->
+#                Applikationspasswörter — a different list from the
+#                mail one.
+
+# How to read a time given without a zone, e.g. "2026-09-01 14:00".
+# Only matters for writing — providers return zoned timestamps when
+# reading. Set to your own zone: an event created as UTC would land two
+# hours off in a German summer.
+timezone = "Europe/Berlin"
+
+[[account]]
+name = "icloud"
+username = "your-apple-id@icloud.com"
+caldav_url = "https://caldav.icloud.com"
+carddav_url = "https://contacts.icloud.com"
+password_env = "DAV_MCP_ICLOUD_PASSWORD"
+# Write access is opt-in per account and off unless set. It gates the
+# write tools regardless of what scopes a token carries.
+writable = false
+timeout = 45
+
+[[account]]
+name = "addonware"
+username = "tim.beck@addonware.de"
+caldav_url = "https://dav.mailbox.org"
+carddav_url = "https://dav.mailbox.org"
+password_env = "DAV_MCP_ADDONWARE_PASSWORD"
+writable = false
+
+
+# --------------------------------------------------------------------
+# OAuth — required as soon as this server is reachable from outside.
+# The audience must differ from imap-mcp's, so that a calendar token
+# cannot open the mailboxes.
+# --------------------------------------------------------------------
+# [auth]
+# enabled = true
+# base_url = "https://mcp.timbeck.de"
+# authorization_servers = ["https://mcp.timbeck.de/auth"]
+# jwks_uri = "https://mcp.timbeck.de/auth/jwks.json"
+# issuer = "https://mcp.timbeck.de/auth"
+# audience = "https://mcp.timbeck.de/dav"
+# # The baseline every token must carry to connect at all.
+# required_scopes = ["calendar:read", "contacts:read"]
+# # Everything a client may ask for. Write scopes belong here but not
+# # above, so a read-only token can still connect. Removing a scope
+# # here is how you withdraw a capability without touching the code.
+# advertised_scopes = [
+#     "calendar:read", "calendar:write",
+#     "contacts:read", "contacts:write",
+# ]
